@@ -8,7 +8,6 @@ QUBIT_LOSS_ALPHA = 0.05
 CLASSICAL_PACKET_LOSS = 0.005
 
 class BaseNode:
-    """A base class for all nodes in the network."""
     def __init__(self, name):
         self.name = name
         self.node_type = "base"
@@ -17,23 +16,19 @@ class BaseNode:
         return f"{self.__class__.__name__}('{self.name}')"
 
 class QuantumNode(BaseNode):
-    """Represents a quantum-capable node."""
     def __init__(self, name):
         super().__init__(name)
         self.node_type = "quantum"
 
     def perform_entanglement_swap(self):
-        """Simulates the success or failure of an entanglement swap at this node."""
         return random.random() <= SWAP_SUCCESS_PROBABILITY
 
 class ClassicalNode(BaseNode):
-    """Represents a purely classical node."""
     def __init__(self, name):
         super().__init__(name)
         self.node_type = "classical"
 
 def setup_fixed_network():
-    """Creates the fixed 12-node network populated with Node objects."""
     G = nx.Graph()
     quantum_node_names = ["Q_Node_1", "Q_Node_2", "Q_Hub_A", "Q_Hub_B", "Q_Node_3", "Q_Node_4"]
     classical_node_names = ["C_Node_A", "C_Node_B", "C_Node_C", "C_Node_D", "C_Node_E", "C_Node_F"]
@@ -61,7 +56,6 @@ def setup_fixed_network():
     return G
 
 def create_scalable_network(num_hubs):
-    """Creates a scalable network populated with Node objects for the Part 4 analysis."""
     G = nx.Graph()
     for i in range(num_hubs):
         hub_name = f"Q_Hub_{i}"
@@ -79,7 +73,6 @@ def create_scalable_network(num_hubs):
     return G
 
 def transmit_quantum_info(graph, path):
-    """Original protocol: Simulates an all-or-nothing quantum transmission."""
     for i in range(len(path) - 1):
         edge_data = graph.get_edge_data(path[i], path[i+1])
         distance = edge_data.get('distance', 1)
@@ -93,7 +86,6 @@ def transmit_quantum_info(graph, path):
     return True
 
 def transmit_with_purification(graph, path, max_retries=10):
-    """Part 5 innovative protocol: Localizes failures and retries."""
     for i in range(len(path) - 1):
         link_success = False
         for _ in range(max_retries):
@@ -111,7 +103,6 @@ def transmit_with_purification(graph, path, max_retries=10):
     return True
 
 def calculate_edge_costs(graph):
-    """Calculates edge costs for the routing protocol."""
     for u, v, data in graph.edges(data=True):
         distance = data['distance']
         link_success_prob = (1 - QUBIT_LOSS_ALPHA) ** distance
@@ -120,15 +111,10 @@ def calculate_edge_costs(graph):
 
 
 def show_part1(graph):
-    """
-    Generates and displays the network topology diagram from Part 1.
-    MODIFIED to show edge distances.
-    """
     print("--- Generating Part 1 Deliverable: Network Topology Diagram ---")
     pos = nx.spring_layout(graph, seed=42)
     node_colors = [data['color'] for node, data in graph.nodes(data=True)]
     
-    # Increase figure size to make labels more readable
     plt.figure(figsize=(14, 9))
     nx.draw(
         graph,
@@ -154,7 +140,6 @@ def show_part1(graph):
     plt.show()
 
 def show_part2(graph):
-    """Generates and displays the link behavior analysis from Part 2."""
     print("\n--- Generating Part 2 Deliverable: Link Behavior Analysis Plot ---")
     num_trials = 1000
     paths_to_test = {
@@ -188,7 +173,6 @@ def show_part2(graph):
     plt.show()
 
 def show_part3(graph):
-    """Runs and prints the output of the routing protocol from Part 3."""
     print("\n--- Generating Part 3 Deliverable: Routing Protocol Demonstration ---")
     source_node = "Q_Node_1"
     destination_node = "Q_Node_4"
@@ -200,7 +184,6 @@ def show_part3(graph):
     print(f"Optimal Classical Fallback Path: {classical_path}")
 
 def show_part4():
-    """Runs the scalability analysis and plots the trend from Part 4."""
     print("\n--- Generating Part 4 Deliverable: Scalability Analysis ---")
     num_trials = 1000
     network_sizes = range(0, 11)
@@ -228,7 +211,6 @@ def show_part4():
     plt.show()
 
 def show_part5(graph):
-    """Runs the comparative analysis for the Part 5 innovative solution."""
     print("\n--- Generating Part 5 Deliverable: Creative Extension Analysis ---")
     num_trials = 1000
     long_path = ["Q_Node_1", "Q_Hub_A", "Q_Hub_B", "Q_Node_4"]
