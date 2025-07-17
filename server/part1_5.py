@@ -9,19 +9,50 @@ QUBIT_LOSS_ALPHA = 0.05
 CLASSICAL_PACKET_LOSS = 0.005
 
 # ==============================================================================
-# SECTION A: CORE NETWORK AND SIMULATION FUNCTIONS
+# SECTION A: OBJECT-ORIENTED NODE DEFINITIONS
+# ==============================================================================
+
+class BaseNode:
+    """A base class for all nodes in the network."""
+    def __init__(self, name):
+        self.name = name
+        self.node_type = "base"
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}('{self.name}')"
+
+class QuantumNode(BaseNode):
+    """Represents a quantum-capable node."""
+    def __init__(self, name):
+        super().__init__(name)
+        self.node_type = "quantum"
+
+    def perform_entanglement_swap(self):
+        """Simulates the success or failure of an entanglement swap at this node."""
+        return random.random() <= SWAP_SUCCESS_PROBABILITY
+
+class ClassicalNode(BaseNode):
+    """Represents a purely classical node."""
+    def __init__(self, name):
+        super().__init__(name)
+        self.node_type = "classical"
+
+# ==============================================================================
+# SECTION B: CORE NETWORK AND SIMULATION FUNCTIONS
 # ==============================================================================
 
 def setup_fixed_network():
-    """Creates the fixed 12-node network for demonstrations in Parts 1-3 & 5."""
+    """Creates the fixed 12-node network populated with Node objects."""
     G = nx.Graph()
-    quantum_nodes = ["Q_Node_1", "Q_Node_2", "Q_Hub_A", "Q_Hub_B", "Q_Node_3", "Q_Node_4"]
-    classical_nodes = ["C_Node_A", "C_Node_B", "C_Node_C", "C_Node_D", "C_Node_E", "C_Node_F"]
+    quantum_node_names = ["Q_Node_1", "Q_Node_2", "Q_Hub_A", "Q_Hub_B", "Q_Node_3", "Q_Node_4"]
+    classical_node_names = ["C_Node_A", "C_Node_B", "C_Node_C", "C_Node_D", "C_Node_E", "C_Node_F"]
     
-    for node_name in quantum_nodes:
-        G.add_node(node_name, node_type="quantum", color="skyblue")
-    for node_name in classical_nodes:
-        G.add_node(node_name, node_type="classical", color="lightgreen")
+    for name in quantum_node_names:
+        node_obj = QuantumNode(name)
+        G.add_node(name, obj=node_obj, color="skyblue")
+    for name in classical_node_names:
+        node_obj = ClassicalNode(name)
+        G.add_node(name, obj=node_obj, color="lightgreen")
         
     edges_with_attributes = [
         ("Q_Hub_A", "Q_Hub_B", {'distance': 50}), ("Q_Hub_A", "Q_Node_1", {'distance': 20}),
@@ -39,16 +70,16 @@ def setup_fixed_network():
     return G
 
 def create_scalable_network(num_hubs):
-    """Creates a scalable network topology for the Part 4 analysis."""
+    """Creates a scalable network populated with Node objects for the Part 4 analysis."""
     G = nx.Graph()
     for i in range(num_hubs):
         hub_name = f"Q_Hub_{i}"
-        G.add_node(hub_name, node_type="quantum")
+        G.add_node(hub_name, obj=QuantumNode(hub_name))
         if i > 0:
             G.add_edge(f"Q_Hub_{i-1}", hub_name, distance=50)
     source, destination = "Source_Node", "Destination_Node"
-    G.add_node(source, node_type="quantum")
-    G.add_node(destination, node_type="quantum")
+    G.add_node(source, obj=QuantumNode(source))
+    G.add_node(destination, obj=QuantumNode(destination))
     if num_hubs > 0:
         G.add_edge(source, "Q_Hub_0", distance=25)
         G.add_edge(f"Q_Hub_{num_hubs-1}", destination, distance=25)
@@ -64,15 +95,14 @@ def transmit_quantum_info(graph, path):
         qubit_loss_probability = 1 - (1 - QUBIT_LOSS_ALPHA) ** distance
         if random.random() < qubit_loss_probability: return False
         if i < len(path) - 2:
-            node_data = graph.nodes[path[i+1]]
-            if node_data['node_type'] == 'classical': return False
-            if node_data['node_type'] == 'quantum':
-                if random.random() > SWAP_SUCCESS_PROBABILITY: return False
+            intermediate_node_obj = graph.nodes[path[i+1]]['obj']
+            if isinstance(intermediate_node_obj, ClassicalNode): return False
+            if isinstance(intermediate_node_obj, QuantumNode):
+                if not intermediate_node_obj.perform_entanglement_swap(): return False
     return True
 
 def transmit_with_purification(graph, path, max_retries=10):
     """Part 5 innovative protocol: Localizes failures and retries."""
-    # 1. Establish each link individually with retries
     for i in range(len(path) - 1):
         link_success = False
         for _ in range(max_retries):
@@ -81,17 +111,12 @@ def transmit_with_purification(graph, path, max_retries=10):
             qubit_loss_probability = 1 - (1 - QUBIT_LOSS_ALPHA) ** distance
             if random.random() > qubit_loss_probability:
                 link_success = True
-                break # Link established, move to next link
-        if not link_success:
-            return False # Failed to establish a link even with retries
-
-    # 2. If all links are established, attempt the swaps
-    num_swaps = len(path) - 2
-    if num_swaps > 0:
-        swap_chain_success_prob = SWAP_SUCCESS_PROBABILITY ** num_swaps
-        if random.random() > swap_chain_success_prob:
-            return False # A failure occurred in the swap chain
-
+                break
+        if not link_success: return False
+    for i in range(1, len(path) - 1):
+        repeater_node = graph.nodes[path[i]]['obj']
+        if isinstance(repeater_node, QuantumNode):
+            if not repeater_node.perform_entanglement_swap(): return False
     return True
 
 def calculate_edge_costs(graph):
@@ -103,17 +128,44 @@ def calculate_edge_costs(graph):
         graph[u][v]['classical_cost'] = distance
 
 # ==============================================================================
-# SECTION B: DELIVERABLE-SPECIFIC FUNCTIONS
+# SECTION C: DELIVERABLE-SPECIFIC FUNCTIONS
 # ==============================================================================
 
 def show_part1_deliverable(graph):
-    """Generates and displays the network topology diagram from Part 1."""
+    """
+    Generates and displays the network topology diagram from Part 1.
+    MODIFIED to show edge distances.
+    """
     print("--- Generating Part 1 Deliverable: Network Topology Diagram ---")
     pos = nx.spring_layout(graph, seed=42)
     node_colors = [data['color'] for node, data in graph.nodes(data=True)]
-    plt.figure(figsize=(12, 8))
-    nx.draw(graph, pos, with_labels=True, node_color=node_colors, node_size=2500, font_size=8, width=1.5)
-    plt.title("Part 1: Scalable Quantum-Classical Hybrid Network Topology")
+    
+    # Increase figure size to make labels more readable
+    plt.figure(figsize=(14, 9))
+    nx.draw(
+        graph,
+        pos,
+        with_labels=True,
+        node_color=node_colors,
+        node_size=2500,
+        font_size=8,
+        width=1.5
+    )
+    
+    # --- ADDED CODE TO DISPLAY EDGE LABELS ---
+    edge_labels = nx.get_edge_attributes(graph, 'distance')
+    # Format labels to include "km" for clarity
+    formatted_labels = {edge: f"{dist} km" for edge, dist in edge_labels.items()}
+    nx.draw_networkx_edge_labels(
+        graph,
+        pos,
+        edge_labels=formatted_labels,
+        font_color='black',
+        font_size=8
+    )
+    # --- END OF ADDED CODE ---
+
+    plt.title("Part 1: Scalable Quantum-Classical Hybrid Network Topology (with Distances)")
     plt.show()
 
 def show_part2_deliverable(graph):
@@ -162,7 +214,6 @@ def show_part3_deliverable(graph):
     print(f"Optimal Quantum-Aware Path: {quantum_path}")
     print(f"Optimal Classical Fallback Path: {classical_path}")
 
-
 def show_part4_deliverable():
     """Runs the scalability analysis and plots the trend from Part 4."""
     print("\n--- Generating Part 4 Deliverable: Scalability Analysis ---")
@@ -197,14 +248,12 @@ def show_part5_deliverable(graph):
     num_trials = 1000
     long_path = ["Q_Node_1", "Q_Hub_A", "Q_Hub_B", "Q_Node_4"]
     
-    # "Before" analysis with the original protocol
     before_success_count = 0
     for _ in range(num_trials):
         if transmit_quantum_info(graph, long_path):
             before_success_count += 1
     before_rate = (before_success_count / num_trials) * 100
     
-    # "After" analysis with the new purification protocol
     after_success_count = 0
     for _ in range(num_trials):
         if transmit_with_purification(graph, long_path):
@@ -216,7 +265,6 @@ def show_part5_deliverable(graph):
     print(f"Original Protocol Success Rate: {before_rate:.2f}%")
     print(f"Adaptive Purification Protocol Success Rate: {after_rate:.2f}%")
     
-    # Plotting the comparison
     labels = ['Original Protocol', 'Adaptive Purification']
     rates = [before_rate, after_rate]
     plt.figure(figsize=(8, 6))
@@ -230,14 +278,12 @@ def show_part5_deliverable(graph):
     plt.show()
 
 # ==============================================================================
-# SECTION C: MAIN EXECUTION BLOCK
+# SECTION D: MAIN EXECUTION BLOCK
 # ==============================================================================
 
 if __name__ == "__main__":
-    # Setup the fixed network for Parts 1, 2, 3, and 5
     fixed_network = setup_fixed_network()
 
-    # Show the output for each part sequentially.
     show_part1_deliverable(fixed_network)
     show_part2_deliverable(fixed_network)
     show_part3_deliverable(fixed_network)
