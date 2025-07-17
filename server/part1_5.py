@@ -3,14 +3,9 @@ import matplotlib.pyplot as plt
 import random
 import math
 
-# --- Constants for Simulation ---
 SWAP_SUCCESS_PROBABILITY = 0.9
 QUBIT_LOSS_ALPHA = 0.05
 CLASSICAL_PACKET_LOSS = 0.005
-
-# ==============================================================================
-# SECTION A: OBJECT-ORIENTED NODE DEFINITIONS
-# ==============================================================================
 
 class BaseNode:
     """A base class for all nodes in the network."""
@@ -36,10 +31,6 @@ class ClassicalNode(BaseNode):
     def __init__(self, name):
         super().__init__(name)
         self.node_type = "classical"
-
-# ==============================================================================
-# SECTION B: CORE NETWORK AND SIMULATION FUNCTIONS
-# ==============================================================================
 
 def setup_fixed_network():
     """Creates the fixed 12-node network populated with Node objects."""
@@ -127,9 +118,6 @@ def calculate_edge_costs(graph):
         graph[u][v]['quantum_cost'] = distance / (link_success_prob + 1e-9)
         graph[u][v]['classical_cost'] = distance
 
-# ==============================================================================
-# SECTION C: DELIVERABLE-SPECIFIC FUNCTIONS
-# ==============================================================================
 
 def show_part1_deliverable(graph):
     """
@@ -152,9 +140,7 @@ def show_part1_deliverable(graph):
         width=1.5
     )
     
-    # --- ADDED CODE TO DISPLAY EDGE LABELS ---
     edge_labels = nx.get_edge_attributes(graph, 'distance')
-    # Format labels to include "km" for clarity
     formatted_labels = {edge: f"{dist} km" for edge, dist in edge_labels.items()}
     nx.draw_networkx_edge_labels(
         graph,
@@ -163,7 +149,6 @@ def show_part1_deliverable(graph):
         font_color='black',
         font_size=8
     )
-    # --- END OF ADDED CODE ---
 
     plt.title("Part 1: Scalable Quantum-Classical Hybrid Network Topology (with Distances)")
     plt.show()
@@ -277,9 +262,6 @@ def show_part5_deliverable(graph):
         plt.text(bar.get_x() + bar.get_width()/2.0, yval, f'{yval:.1f}%', va='bottom', ha='center')
     plt.show()
 
-# ==============================================================================
-# SECTION D: MAIN EXECUTION BLOCK
-# ==============================================================================
 
 if __name__ == "__main__":
     fixed_network = setup_fixed_network()
