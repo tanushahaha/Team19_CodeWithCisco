@@ -3,7 +3,6 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 
 class SymmetricCrypto:
-    """A helper class for AES-256-GCM encryption and decryption."""
     def __init__(self, key):
         if len(key) != 32:
             raise ValueError("Key must be 32 bytes for AES-256.")
@@ -11,13 +10,11 @@ class SymmetricCrypto:
         self.aesgcm = AESGCM(self.key)
 
     def encrypt(self, plaintext):
-        """Encrypts plaintext using AES-GCM."""
         nonce = os.urandom(12)
         ciphertext = self.aesgcm.encrypt(nonce, plaintext.encode('utf-8'), None)
         return nonce + ciphertext
 
     def decrypt(self, ciphertext_with_nonce):
-        """Decrypts AES-GCM ciphertext."""
         nonce = ciphertext_with_nonce[:12]
         ciphertext = ciphertext_with_nonce[12:]
         decrypted_bytes = self.aesgcm.decrypt(nonce, ciphertext, None)
@@ -25,18 +22,15 @@ class SymmetricCrypto:
 
 
 class KeyDistributionCenter:
-    """The trusted central server that manages keys."""
     def __init__(self):
         self._master_keys = {}
 
     def register_user(self, user_id):
-        """Generates and stores a master key for a new user."""
         master_key = os.urandom(32)
         self._master_keys[user_id] = master_key
         return master_key
 
     def generate_session_key(self, user_a_id, user_b_id):
-        """Generates a session key for two users."""
         if user_a_id not in self._master_keys or user_b_id not in self._master_keys:
             raise ValueError("One or both users are not registered.")
 
@@ -53,7 +47,6 @@ class KeyDistributionCenter:
         return package_for_alice
 
 class User:
-    """Represents a user in the secure communication group."""
     def __init__(self, user_id, kdc):
         self.id = user_id
         self.kdc = kdc
@@ -62,7 +55,6 @@ class User:
         self._session_keys = {}
 
     def request_key_for(self, other_user_id):
-        """Requests a session key from the KDC to talk to another user."""
         encrypted_package = self.kdc.generate_session_key(self.id, other_user_id)
 
         decrypted_package = self._crypto_master.decrypt(encrypted_package).encode('latin-1')
@@ -75,7 +67,6 @@ class User:
         return ticket
 
     def receive_key_ticket(self, ticket, sender_id):
-        """Receives and decrypts a ticket from another user."""
         decrypted_ticket = self._crypto_master.decrypt(ticket).encode('latin-1')
 
         session_key = decrypted_ticket[:32]
@@ -88,7 +79,6 @@ class User:
         print(f"[{self.id}] Successfully processed ticket and received session key for {sender_id}.")
 
     def send_message(self, recipient_id, message):
-        """Encrypts and sends a message using a shared session key."""
         if recipient_id not in self._session_keys:
             raise ValueError(f"No session key for {recipient_id}. Request one first.")
         
@@ -98,7 +88,6 @@ class User:
         return encrypted_message
 
     def receive_message(self, sender_id, encrypted_message):
-        """Receives and decrypts a message."""
         if sender_id not in self._session_keys:
             raise ValueError(f"No session key for {sender_id}.")
             
