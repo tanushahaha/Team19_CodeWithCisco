@@ -4,7 +4,7 @@ import img1 from './assets/1.png'
 import img2 from './assets/2.png'
 import img4 from './assets/3.png'
 import img5 from './assets/4.png'
-
+import Simulator from './simulator'
 function App() {
   const [activeSection, setActiveSection] = useState('overview')
 
@@ -137,9 +137,7 @@ function App() {
           <p className="text-gray-300 mt-4">Implement one of these for a 25-member private group, ensuring pairwise security.</p>
         </section>
 
-        <footer className="text-center text-gray-400 mt-12">
-          <p>Quantum-Classical Hybrid Network © 2025</p>
-        </footer>
+        <Simulator />
       </main>
     </div>
   )
