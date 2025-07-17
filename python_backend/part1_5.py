@@ -119,7 +119,7 @@ def calculate_edge_costs(graph):
         graph[u][v]['classical_cost'] = distance
 
 
-def show_part1_deliverable(graph):
+def show_part1(graph):
     """
     Generates and displays the network topology diagram from Part 1.
     MODIFIED to show edge distances.
@@ -153,7 +153,7 @@ def show_part1_deliverable(graph):
     plt.title("Part 1: Scalable Quantum-Classical Hybrid Network Topology (with Distances)")
     plt.show()
 
-def show_part2_deliverable(graph):
+def show_part2(graph):
     """Generates and displays the link behavior analysis from Part 2."""
     print("\n--- Generating Part 2 Deliverable: Link Behavior Analysis Plot ---")
     num_trials = 1000
@@ -187,7 +187,7 @@ def show_part2_deliverable(graph):
     plt.tight_layout()
     plt.show()
 
-def show_part3_deliverable(graph):
+def show_part3(graph):
     """Runs and prints the output of the routing protocol from Part 3."""
     print("\n--- Generating Part 3 Deliverable: Routing Protocol Demonstration ---")
     source_node = "Q_Node_1"
@@ -199,7 +199,7 @@ def show_part3_deliverable(graph):
     print(f"Optimal Quantum-Aware Path: {quantum_path}")
     print(f"Optimal Classical Fallback Path: {classical_path}")
 
-def show_part4_deliverable():
+def show_part4():
     """Runs the scalability analysis and plots the trend from Part 4."""
     print("\n--- Generating Part 4 Deliverable: Scalability Analysis ---")
     num_trials = 1000
@@ -227,7 +227,7 @@ def show_part4_deliverable():
     plt.ylim(0, 100)
     plt.show()
 
-def show_part5_deliverable(graph):
+def show_part5(graph):
     """Runs the comparative analysis for the Part 5 innovative solution."""
     print("\n--- Generating Part 5 Deliverable: Creative Extension Analysis ---")
     num_trials = 1000
@@ -266,8 +266,8 @@ def show_part5_deliverable(graph):
 if __name__ == "__main__":
     fixed_network = setup_fixed_network()
 
-    show_part1_deliverable(fixed_network)
-    show_part2_deliverable(fixed_network)
-    show_part3_deliverable(fixed_network)
-    show_part4_deliverable()
-    show_part5_deliverable(fixed_network)
+    show_part1(fixed_network)
+    show_part2(fixed_network)
+    show_part3(fixed_network)
+    show_part4()
+    show_part5(fixed_network)
