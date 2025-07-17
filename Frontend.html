@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum-Classical Hybrid Network Simulator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 350px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .main-content {
+            flex: 1;
+            position: relative;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            background: linear-gradient(45deg, #00ff88, #0088ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h3 {
+            color: #00ff88;
+            margin-bottom: 15px;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #aaa;
+            text-transform: uppercase;
+        }
+
+        .control-group select,
+        .control-group input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .control-group select:focus,
+        .control-group input:focus {
+            outline: none;
+            border-color: #00ff88;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(45deg, #00ff88, #0088ff);
+            border: none;
+            border-radius: 5px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .stats {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .stat-value {
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        .network-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .message-log {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 400px;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .message-log h4 {
+            color: #00ff88;
+            margin-bottom: 10px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 3px;
+        }
+
+        .log-success {
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+        }
+
+        .log-error {
+            background: rgba(255, 0, 0, 0.1);
+            color: #ff4444;
+        }
+
+        .log-info {
+            background: rgba(0, 136, 255, 0.1);
+            color: #4488ff;
+        }
+
+        .performance-chart {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .chart-bar {
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #0088ff);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .chart-label {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: #fff;
+            z-index: 2;
+        }
+
+        .node-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-width: 200px;
+            display: none;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .quantum-particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #00ff88;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00ff88;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #00ff88;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="header">
+                <h1>Quantum Network</h1>
+                <p>Hybrid Classical-Quantum Simulator</p>
+            </div>
+
+            <div class="section">
+                <h3>Network Controls</h3>
+                <div class="control-group">
+                    <label>Network Size</label>
+                    <select id="networkSize">
+                        <option value="small">Small (10 nodes)</option>
+                        <option value="medium" selected>Medium (20 nodes)</option>
+                        <option value="large">Large (50 nodes)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Topology</label>
+                    <select id="topology">
+                        <option value="random">Random</option>
+                        <option value="grid" selected>Grid</option>
+                        <option value="ring">Ring</option>
+                        <option value="star">Star</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="generateNetwork()">Generate Network</button>
+            </div>
+
+            <div class="section">
+                <h3>Message Simulation</h3>
+                <div class="control-group">
+                    <label>Source Node</label>
+                    <select id="sourceNode">
+                        <option value="N1">Node 1</option>
+                        <option value="N2">Node 2</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Destination Node</label>
+                    <select id="destNode">
+                        <option value="N5">Node 5</option>
+                        <option value="N10">Node 10</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Message Type</label>
+                    <select id="messageType">
+                        <option value="classical">Classical</option>
+                        <option value="quantum">Quantum</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="sendMessage()">Send Message</button>
+                <button class="btn btn-secondary" onclick="startSimulation()">Auto Simulate</button>
+            </div>
+
+            <div class="section">
+                <h3>Network Statistics</h3>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span>Total Nodes:</span>
+                        <span class="stat-value" id="totalNodes">20</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Quantum Nodes:</span>
+                        <span class="stat-value" id="quantumNodes">8</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Classical Nodes:</span>
+                        <span class="stat-value" id="classicalNodes">7</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Hybrid Nodes:</span>
+                        <span class="stat-value" id="hybridNodes">5</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Success Rate:</span>
+                        <span class="stat-value" id="successRate">87%</span>
+                    </div>
+                </div>
+
+                <div class="performance-chart">
+                    <h4 style="color: #00ff88; margin-bottom: 10px;">Performance Metrics</h4>
+                    <div class="chart-bar">
+                        <div class="chart-label">Quantum Fidelity</div>
+                        <div class="chart-fill" style="width: 78%;"></div>
+                    </div>
+                    <div class="chart-bar">
+                        <div class="chart-label">Network Efficiency</div>
+                        <div class="chart-fill" style="width: 92%;"></div>
+                    </div>
+                    <div class="chart-bar">
+                        <div class="chart-label">Throughput</div>
+                        <div class="chart-fill" style="width: 65%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Quantum Parameters</h3>
+                <div class="control-group">
+                    <label>Decoherence Rate</label>
+                    <input type="range" id="decoherenceRate" min="0.01" max="0.5" step="0.01" value="0.1">
+                </div>
+                <div class="control-group">
+                    <label>Max Quantum Distance</label>
+                    <input type="range" id="maxQuantumDistance" min="50" max="200" step="10" value="100">
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <canvas id="networkCanvas" class="network-canvas"></canvas>
+            
+            <div class="node-info" id="nodeInfo">
+                <h4>Node Information</h4>
+                <div id="nodeDetails"></div>
+            </div>
+
+            <div class="message-log" id="messageLog">
+                <h4>Message Log</h4>
+                <div id="logEntries"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        // Network visualization using Three.js
+        let scene, camera, renderer;
+        let networkNodes = [];
+        let networkEdges = [];
+        let isSimulating = false;
+        let messageCount = 0;
+        let successCount = 0;
+
+        // Initialize 3D scene
+        function init3DScene() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('networkCanvas'), alpha: true });
+            
+            const canvas = document.getElementById('networkCanvas');
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            renderer.setClearColor(0x000000, 0);
+            
+            camera.position.z = 10;
+            
+            // Add lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 10);
+            scene.add(directionalLight);
+            
+            animate();
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotate camera around the network
+            const time = Date.now() * 0.0005;
+            camera.position.x = Math.cos(time) * 15;
+            camera.position.z = Math.sin(time) * 15;
+            camera.lookAt(0, 0, 0);
+            
+            // Animate quantum nodes
+            networkNodes.forEach(node => {
+                if (node.userData.type === 'quantum') {
+                    node.rotation.y += 0.02;
+                    node.material.emissive.setHex(Math.sin(time * 2) > 0 ? 0x004400 : 0x000000);
+                }
+            });
+            
+            renderer.render(scene, camera);
+        }
+
+        // Generate network visualization
+        function generateNetwork() {
+            showLoading();
+            
+            // Clear existing network
+            networkNodes.forEach(node => scene.remove(node));
+            networkEdges.forEach(edge => scene.remove(edge));
+            networkNodes = [];
+            networkEdges = [];
+            
+            const size = document.getElementById('networkSize').value;
+            const topology = document.getElementById('topology').value;
+            
+            let nodeCount = size === 'small' ? 10 : size === 'medium' ? 20 : 50;
+            
+            // Create nodes
+            for (let i = 0; i < nodeCount; i++) {
+                const nodeType = Math.random() < 0.3 ? 'quantum' : Math.random() < 0.6 ? 'classical' : 'hybrid';
+                const node = createNode(i, nodeType, topology, nodeCount);
+                networkNodes.push(node);
+                scene.add(node);
+            }
+            
+            // Create connections
+            createConnections(topology, nodeCount);
+            
+            // Update UI
+            updateNetworkStats();
+            populateNodeSelectors();
+            
+            hideLoading();
+            addLogEntry('Network generated successfully', 'success');
+        }
+
+        // Create individual node
+        function createNode(index, type, topology, nodeCount) {
+            let geometry, material;
+            
+            // Different shapes for different node types
+            switch (type) {
+                case 'quantum':
+                    geometry = new THREE.OctahedronGeometry(0.3);
+                    material = new THREE.MeshPhongMaterial({ 
+                        color: 0xff4444,
+                        emissive: 0x004400,
+                        transparent: true,
+                        opacity: 0.8
+                    });
+                    break;
+                case 'classical':
+                    geometry = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+                    material = new THREE.MeshPhongMaterial({ 
+                        color: 0x4444ff,
+                        emissive: 0x000044
+                    });
+                    break;
+                case 'hybrid':
+                    geometry = new THREE.SphereGeometry(0.3);
+                    material = new THREE.MeshPhongMaterial({ 
+                        color: 0x44ff44,
+                        emissive: 0x004400
+                    });
+                    break;
+            }
+            
+            const node = new THREE.Mesh(geometry, material);
+            
+            // Position based on topology
+            const pos = getNodePosition(index, topology, nodeCount);
+            node.position.set(pos.x, pos.y, pos.z);
+            
+            node.userData = { id: index, type: type, connections: [] };
+            
+            return node;
+        }
+
+        // Get node position based on topology
+        function getNodePosition(index, topology, nodeCount) {
+            switch (topology) {
+                case 'grid':
+                    const cols = Math.ceil(Math.sqrt(nodeCount));
+                    const x = (index % cols - cols / 2) * 2;
+                    const y = (Math.floor(index / cols) - Math.floor(nodeCount / cols) / 2) * 2;
+                    return { x, y, z: 0 };
+                    
+                case 'ring':
+                    const angle = (index / nodeCount) * Math.PI * 2;
+                    return { 
+                        x: Math.cos(angle) * 4, 
+                        y: Math.sin(angle) * 4, 
+                        z: 0 
+                    };
+                    
+                case 'star':
+                    if (index === 0) return { x: 0, y: 0, z: 0 };
+                    const starAngle = ((index - 1) / (nodeCount - 1)) * Math.PI * 2;
+                    return { 
+                        x: Math.cos(starAngle) * 3, 
+                        y: Math.sin(starAngle) * 3, 
+                        z: 0 
+                    };
+                    
+                default: // random
+                    return { 
+                        x: (Math.random() - 0.5) * 10, 
+                        y: (Math.random() - 0.5) * 10, 
+                        z: (Math.random() - 0.5) * 2 
+                    };
+            }
+        }
+
+        // Create connections between nodes
+        function createConnections(topology, nodeCount) {
+            const connections = [];
+            
+            switch (topology) {
+                case 'grid':
+                    const cols = Math.ceil(Math.sqrt(nodeCount));
+                    for (let i = 0; i < nodeCount; i++) {
+                        const row = Math.floor(i / cols);
+                        const col = i % cols;
+                        
+                        // Connect to right neighbor
+                        if (col < cols - 1 && i + 1 < nodeCount) {
+                            connections.push([i, i + 1]);
+                        }
+                        // Connect to bottom neighbor
+                        if (row < Math.floor(nodeCount / cols) && i + cols < nodeCount) {
+                            connections.push([i, i + cols]);
+                        }
+                    }
+                    break;
+                    
+                case 'ring':
+                    for (let i = 0; i < nodeCount; i++) {
+                        connections.push([i, (i + 1) % nodeCount]);
+                    }
+                    break;
+                    
+                case 'star':
+                    for (let i = 1; i < nodeCount; i++) {
+                        connections.push([0, i]);
+                    }
+                    break;
+                    
+                default: // random
+                    for (let i = 0; i < nodeCount; i++) {
+                        for (let j = i + 1; j < nodeCount; j++) {
+                            if (Math.random() < 0.3) {
+                                connections.push([i, j]);
+                            }
+                        }
+                    }
+            }
+            
+            // Create visual connections
+            connections.forEach(([i, j]) => {
+                const edge = createEdge(networkNodes[i], networkNodes[j]);
+                networkEdges.push(edge);
+                scene.add(edge);
+                
+                networkNodes[i].userData.connections.push(j);
+                networkNodes[j].userData.connections.push(i);
+            });
+        }
+
+        // Create edge between two nodes
+        function createEdge(nodeA, nodeB) {
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array([
+                nodeA.position.x, nodeA.position.y, nodeA.position.z,
+                nodeB.position.x, nodeB.position.y, nodeB.position.z
+            ]);
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            
+            const canQuantum = nodeA.userData.type !== 'classical' && nodeB.userData.type !== 'classical';
+            const material = new THREE.LineBasicMaterial({
+                color: canQuantum ? 0xff4444 : 0x666666,
+                opacity: canQuantum ? 0.8 : 0.4,
+                transparent: true
+            });
+            
+            return new THREE.Line(geometry, material);
+        }
+
+        // Send message simulation
+        function sendMessage() {
+            const source = document.getElementById('sourceNode').value;
+            const dest = document.getElementById('destNode').value;
+            const msgType = document.getElementById('messageType').value;
+            
+            messageCount++;
+            
+            // Simulate message routing
+            setTimeout(() => {
+                const success = Math.random() < (msgType === 'quantum' ? 0.7 : 0.9);
+                if (success) successCount++;
+                
+                const fidelity = msgType === 'quantum' ? (0.5 + Math.random() * 0.5) : 1.0;
+                
+                addLogEntry(
+                    `${msgType.toUpperCase()} message ${source}→${dest}: ${success ? 'SUCCESS' : 'FAILED'} (Fidelity: ${(fidelity * 100).toFixed(1)}%)`,
+                    success ? 'success' : 'error'
+                );
+                
+                updateSuccessRate();
+                animateMessage(source, dest, msgType, success);
+            }, 500);
+        }
+
+        // Animate message transmission
+        function animateMessage(source, dest, type, success) {
+            const geometry = new THREE.SphereGeometry(0.1);
+            const material = new THREE.MeshPhongMaterial({
+                color: type === 'quantum' ? 0x00ff88 : 0x0088ff,
+                emissive: type === 'quantum' ? 0x004400 : 0x000044
+            });
+            
+            const message = new THREE.Mesh(geometry, material);
+            const sourceNode = networkNodes[parseInt(source.replace('N', '')) - 1];
+            const destNode = networkNodes[parseInt(dest.replace('N', '')) - 1];
+            
+            message.position.copy(sourceNode.position);
+            scene.add(message);
+            
+            // Animate movement
+            const startTime = Date.now();
+            const duration = 2000;
+            
+            function animateStep() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                message.position.lerpVectors(sourceNode.position, destNode.position, progress);
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animateStep);
+                } else {
+                    scene.remove(message);
+                    
+                    // Flash destination node
+                    const originalColor = destNode.material.color.clone();
+                    destNode.material.color.setHex(success ? 0x00ff00 : 0xff0000);
+                    setTimeout(() => {
+                        destNode.material.color.copy(originalColor);
+                    }, 500);
+                }
+            }
+            
+            animateStep();
+        }
+
+        // Auto simulation
+        function startSimulation() {
+            if (isSimulating) {
+                isSimulating = false;
+                document.querySelector('button[onclick="startSimulation()"]').textContent = 'Auto Simulate';
+                return;
+            }
+            
+            isSimulating = true;
+            document.querySelector('button[onclick="startSimulation()"]').textContent = 'Stop Simulation';
+            
+            function simulate() {
+                if (!isSimulating) return;
+                
+                // Random message
+                const sourceOptions = document.getElementById('sourceNode').options;
+                const destOptions = document.getElementById('destNode').options;
+                
+                document.getElementById('sourceNode').selectedIndex = Math.floor(Math.random() * sourceOptions.length);
+                document.getElementById('destNode').selectedIndex = Math.floor(Math.random() * destOptions.length);
+                document.getElementById('messageType').selectedIndex = Math.floor(Math.random() * 2);
+                
+                sendMessage();
+                
+                setTimeout(simulate, 1000 + Math.random() * 2000);
+            }
+            
+            simulate();
+        }
+
+        // Utility functions
+        function updateNetworkStats() {
+            const quantum = networkNodes.filter(n => n.userData.type === 'quantum').length;
+            const classical = networkNodes.filter(n => n.userData.type === 'classical').length;
+            const hybrid = networkNodes.filter(n => n.userData.type === 'hybrid').length;
+            
+            document.getElementById('totalNodes').textContent = networkNodes.length;
+            document.getElementById('quantumNodes').textContent = quantum;
+            document.getElementById('classicalNodes').textContent = classical;
+            document.getElementById('hybridNodes').textContent = hybrid;
+        }
+
+        function populateNodeSelectors() {
+            const sourceSelect = document.getElementById('sourceNode');
+            const destSelect = document.getElementById('destNode');
+            
+            sourceSelect.innerHTML = '';
+            destSelect.innerHTML = '';
+            
+            networkNodes.forEach((node, index) => {
+                const option = document.createElement('option');
+                option.value = `N${index + 1}`;
+                option.textContent = `Node ${index + 1} (${node.userData.type})`;
+                sourceSelect.appendChild(option.cloneNode(true));
+                destSelect.appendChild(option);
+            });
+        }
+
+        function updateSuccessRate() {
+            const rate = messageCount > 0 ? (successCount / messageCount * 100).toFixed(0) : 0;
+            document.getElementById('successRate').textContent = `${rate}%`;
+        }
+
+        function addLogEntry(message, type) {
+            const logEntries = document.getElementById('logEntries');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logEntries.appendChild(entry);
+            logEntries.scrollTop = logEntries.scrollHeight;
+            
+            // Keep only last 50 entries
+            while (logEntries.children.length > 50) {
+                logEntries.removeChild(logEntries.firstChild);
+            }
+        }
+
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        // Initialize everything
+        window.addEventListener('load', () => {
+            init3DScene();
+            generateNetwork();
+            addLogEntry('Quantum-Classical Hybrid Network Simulator initialized', 'info');
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('networkCanvas');
+            camera.aspect = canvas.clientWidth / canvas.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+        });
+    </script>
+</body>
+</html>
