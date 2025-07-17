@@ -128,7 +128,6 @@ def show_part1(graph):
     pos = nx.spring_layout(graph, seed=42)
     node_colors = [data['color'] for node, data in graph.nodes(data=True)]
     
-    # Increase figure size to make labels more readable
     plt.figure(figsize=(14, 9))
     nx.draw(
         graph,
